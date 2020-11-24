@@ -1,0 +1,6 @@
+apiVersion: v2
+name: dedicate-node-labeling
+description: A Helm chart for auto-labeling nodes where chart workloads was assigned
+type: application
+version: 0.1.0
+appVersion: 0.1.0

@@ -1,0 +1,84 @@
+{{- if gt (len (list .Values.servers)) 0 -}}
+{{- range $key, $val := .Values.servers }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-{{ $key | quote }}
+  labels:
+    {{- include "dedicate-node-labeling.labels" $ | nindent 4 }}
+spec:
+  {{- $serverConfig := dict "count" "1" "autoStop" "true" }}
+  {{- $currentConfig := $val | default $serverConfig }}
+  {{- $serverConfig := deepCopy $currentConfig | mergeOverwrite $serverConfig }}
+  replicas: {{ $serverConfig.count | int }}
+  selector:
+    matchLabels:
+      {{- include "dedicate-node-labeling.selectorLabels" $ | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        test: test
+      labels:
+        {{- include "dedicate-node-labeling.selectorLabels" $ | nindent 8 }}
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - {{ $.Chart.Name }}
+            topologyKey: kubernetes.io/hostname
+      serviceAccountName: {{ $.Release.Name }}-pod 
+      securityContext:
+        {{- toYaml $.Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ $.Chart.Name }}
+          image: bitnami/kubectl:latest
+          imagePullPolicy: IfNotPresent
+          command:
+          - /bin/bash
+          args:
+          - /app/label-assigner.sh
+          env:
+          - name: LABEL_SERVER_NAME
+            value: {{ $key | quote }}
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          resources:
+            {{- toYaml $.Values.resources | nindent 12 }}
+          volumeMounts:
+          - mountPath: /app/label-assigner.sh
+            name: label-assigner-script
+            subPath: label-assigner.sh
+      volumes:
+      - configMap:
+          defaultMode: 777
+          name: {{ $.Release.Name }}-script
+          optional: false
+        name: label-assigner-script
+      {{- with $.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+ {{- end }}
+ {{- end -}}

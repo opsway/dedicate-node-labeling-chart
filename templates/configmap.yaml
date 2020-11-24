@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-script
+  labels:
+{{ include "dedicate-node-labeling.labels" . | indent 4 }}
+
+data:
+  label-assigner.sh: |-
+    #!/bin/bash
+
+    _shutdown() {
+      echo "Stop pod & remove label from current node..."
+      kubectl label node ${NODE_NAME} SERVER_NAME-
+      echo "Done."
+      kill -9 "$child" 2>/dev/null
+    }
+
+    trap _shutdown SIGTERM
+
+    echo "Start pod & add label to assigned node...";
+    kubectl label nodes ${NODE_NAME} SERVER_NAME=${LABEL_SERVER_NAME}
+    echo "Done. Sleeping..."
+    tail -f /dev/null &
+    child=$!
+    wait "$child"
+
