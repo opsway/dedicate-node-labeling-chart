@@ -16,10 +16,10 @@ data:
       kill -9 "$child" 2>/dev/null
     }
 
-    trap _shutdown SIGTERM
+    trap _shutdown SIGTERM SIGINT SIGKILL SIGQUIT
 
     echo "Start pod & add label to assigned node...";
-    kubectl label nodes ${NODE_NAME} SERVER_NAME=${LABEL_SERVER_NAME}
+    kubectl label nodes ${NODE_NAME} SERVER_NAME=${LABEL_SERVER_NAME} --overwrite
     echo "Done. Sleeping..."
     tail -f /dev/null &
     child=$!

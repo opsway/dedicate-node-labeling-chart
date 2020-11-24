@@ -20,6 +20,7 @@ spec:
     metadata:
       annotations:
         test: test
+        rollme: {{ randAlphaNum 5 | quote }}
       labels:
         {{- include "dedicate-node-labeling.selectorLabels" $ | nindent 8 }}
         app.kubernetes.io/component: server-{{ $key }}
