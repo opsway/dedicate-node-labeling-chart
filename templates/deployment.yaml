@@ -13,6 +13,8 @@ spec:
   {{- $currentConfig := $val | default $serverConfig }}
   {{- $serverConfig := deepCopy $currentConfig | mergeOverwrite $serverConfig }}
   replicas: {{ $serverConfig.count | int }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "dedicate-node-labeling.selectorLabels" $ | nindent 6 }}
