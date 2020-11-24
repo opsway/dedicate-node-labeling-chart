@@ -6,6 +6,7 @@ metadata:
   name: server-{{ $key }}
   labels:
     {{- include "dedicate-node-labeling.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: server-{{ $key }}
 spec:
   {{- $serverConfig := dict "count" "1" "autoStop" "true" }}
   {{- $currentConfig := $val | default $serverConfig }}
@@ -14,12 +15,14 @@ spec:
   selector:
     matchLabels:
       {{- include "dedicate-node-labeling.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: server-{{ $key }}
   template:
     metadata:
       annotations:
         test: test
       labels:
         {{- include "dedicate-node-labeling.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: server-{{ $key }}
     spec:
       affinity:
         podAffinity:
