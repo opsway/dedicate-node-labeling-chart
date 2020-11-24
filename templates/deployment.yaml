@@ -68,7 +68,7 @@ spec:
             subPath: label-assigner.sh
       volumes:
       - configMap:
-          defaultMode: 777
+          defaultMode: 0777
           name: {{ $.Release.Name }}-script
           optional: false
         name: label-assigner-script
